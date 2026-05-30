@@ -21,6 +21,12 @@ const router = createRouter({
       component: () => import('../views/CotizarView.vue'),
       meta: { title: 'Cotizar | Latitude' },
     },
+    {
+      path: '/rastreo',
+      name: 'rastreo',
+      component: () => import('../views/RastreoView.vue'),
+      meta: { title: 'Rastreo de envíos | Latitude' },
+    },
   ],
 })
 

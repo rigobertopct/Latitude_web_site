@@ -5,7 +5,7 @@ import Swal from 'sweetalert2'
 import { useAuthStore } from '../stores/auth'
 
 defineProps({
-  /** 'productos' | 'cotizar' */
+  /** 'productos' | 'cotizar' | 'rastreo' */
   active: {
     type: String,
     default: '',
@@ -26,7 +26,7 @@ async function handleSignInGoogle() {
         icon: 'error',
         title: 'Error al iniciar sesión',
         text: err.message || 'No se pudo iniciar sesión con Google.',
-        confirmButtonColor: '#0051d5',
+        confirmButtonColor: '#0a1b3d',
       })
     }
   } finally {
@@ -43,7 +43,10 @@ async function handleSignOut() {
   <div class="portal-chrome">
     <header class="portal-header">
       <div class="portal-header__inner">
-        <RouterLink to="/" class="portal-logo" @click="menuOpen = false">Latitude</RouterLink>
+        <RouterLink to="/" class="portal-brand" @click="menuOpen = false">
+          <span class="portal-brand__main">LATITUDE</span>
+          <span class="portal-brand__sub">TRANSPORT SERVICES, INC.</span>
+        </RouterLink>
 
         <button
           type="button"
@@ -55,50 +58,58 @@ async function handleSignOut() {
           <span class="material-symbols-outlined">{{ menuOpen ? 'close' : 'menu' }}</span>
         </button>
 
-        <nav class="portal-nav" :class="{ 'portal-nav--open': menuOpen }">
-          <RouterLink :to="{ path: '/', hash: '#servicios' }" class="portal-nav__link" @click="menuOpen = false">Servicios</RouterLink>
-          <RouterLink
-            to="/productos"
-            class="portal-nav__link"
-            :class="{ 'portal-nav__link--active': active === 'productos' }"
-            @click="menuOpen = false"
-          >
-            Productos
-          </RouterLink>
-          <RouterLink :to="{ path: '/', hash: '#cobertura' }" class="portal-nav__link" @click="menuOpen = false">Rastreo</RouterLink>
-          <RouterLink
-            to="/cotizar"
-            class="portal-nav__link"
-            :class="{ 'portal-nav__link--active': active === 'cotizar' }"
-            @click="menuOpen = false"
-          >
-            Cotizar
-          </RouterLink>
-        </nav>
+        <div class="portal-header__center" :class="{ 'portal-header__center--open': menuOpen }">
+          <nav class="portal-nav">
+            <RouterLink :to="{ path: '/', hash: '#servicios' }" class="portal-nav__link" @click="menuOpen = false">
+              Servicios
+            </RouterLink>
+            <RouterLink
+              to="/productos"
+              class="portal-nav__link"
+              :class="{ 'portal-nav__link--active': active === 'productos' }"
+              @click="menuOpen = false"
+            >
+              Productos
+            </RouterLink>
+            <RouterLink
+              to="/rastreo"
+              class="portal-nav__link"
+              :class="{ 'portal-nav__link--active': active === 'rastreo' }"
+              @click="menuOpen = false"
+            >
+              Rastreo
+            </RouterLink>
+            <RouterLink
+              to="/cotizar"
+              class="portal-nav__link"
+              :class="{ 'portal-nav__link--active': active === 'cotizar' }"
+              @click="menuOpen = false"
+            >
+              Cotizar
+            </RouterLink>
+          </nav>
 
-        <div class="portal-header__actions">
-          <template v-if="auth.isLoggedIn">
-            <span class="portal-user">{{ auth.displayName?.split(' ')[0] || 'Usuario' }}</span>
-            <button type="button" class="portal-link-btn" @click="handleSignOut">Salir</button>
-          </template>
-          <template v-else>
-            <button
-              type="button"
-              class="portal-link-btn portal-link-btn--hide-mobile"
-              :disabled="authLoading"
-              @click="handleSignInGoogle"
-            >
-              {{ authLoading ? 'Conectando…' : 'Iniciar sesión' }}
-            </button>
-            <button
-              type="button"
-              class="portal-register-btn portal-register-btn--hide-mobile"
-              :disabled="authLoading"
-              @click="handleSignInGoogle"
-            >
-              Registrarse
-            </button>
-          </template>
+          <div class="portal-header__actions">
+            <template v-if="auth.isLoggedIn">
+              <div class="user-pill">
+                <i class="fas fa-user-circle user-pill__icon" aria-hidden="true"></i>
+                <span class="user-pill__name">{{ auth.displayName?.split(' ')[0] || 'Usuario' }}</span>
+                <button type="button" class="user-pill__logout" aria-label="Cerrar sesión" @click="handleSignOut">
+                  <span class="material-symbols-outlined">logout</span>
+                </button>
+              </div>
+            </template>
+            <template v-else>
+              <button
+                type="button"
+                class="portal-auth-btn portal-auth-btn--ghost"
+                :disabled="authLoading"
+                @click="handleSignInGoogle"
+              >
+                {{ authLoading ? 'Conectando…' : 'Iniciar sesión' }}
+              </button>
+            </template>
+          </div>
         </div>
       </div>
     </header>
@@ -117,6 +128,7 @@ async function handleSignOut() {
           <h4 class="label-caps portal-footer__heading">Recursos</h4>
           <RouterLink to="/" class="portal-footer__link">Inicio</RouterLink>
           <RouterLink to="/productos" class="portal-footer__link">Productos</RouterLink>
+          <RouterLink to="/rastreo" class="portal-footer__link">Rastreo</RouterLink>
           <RouterLink to="/cotizar" class="portal-footer__link">Cotizar</RouterLink>
         </div>
         <div>
@@ -131,31 +143,49 @@ async function handleSignOut() {
 </template>
 
 <style scoped>
+/* Mismo estilo navy que la página principal (Design2Immersive) */
 .portal-header {
   position: sticky;
   top: 0;
-  z-index: 40;
-  background: #f8f9ff;
-  border-bottom: 1px solid #c6c6cd;
+  z-index: 50;
+  background: #0a1b3d;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .portal-header__inner {
-  max-width: 1280px;
+  max-width: 96rem;
   margin: 0 auto;
-  padding: 1rem clamp(1rem, 4vw, 3rem);
+  padding: 0.65rem clamp(1rem, 3vw, 2rem);
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
-.portal-logo {
-  font-family: 'Hanken Grotesk', 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0b1c30;
+.portal-brand {
   text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
   flex-shrink: 0;
+}
+
+.portal-brand__main {
+  font-family: 'Plus Jakarta Sans', 'Hanken Grotesk', system-ui, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+.portal-brand__sub {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  opacity: 0.95;
+  white-space: nowrap;
 }
 
 .portal-menu-btn {
@@ -164,89 +194,130 @@ async function handleSignOut() {
   background: none;
   border: none;
   cursor: pointer;
-  color: #0b1c30;
+  color: #fff;
+}
+
+.portal-header__center {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.portal-header__center--open {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  order: 4;
+  padding-top: 0.5rem;
+  gap: 0.75rem;
 }
 
 .portal-nav {
   display: none;
   align-items: center;
-  gap: 2rem;
-  flex: 1;
-  justify-content: center;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  flex-wrap: nowrap;
 }
 
-.portal-nav--open {
+.portal-header__center--open .portal-nav {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 100%;
-  order: 4;
-  padding-top: 0.5rem;
 }
 
 .portal-nav__link {
-  color: #45464d;
+  color: #fff;
   text-decoration: none;
-  font-size: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
   white-space: nowrap;
   transition: color 0.2s;
 }
 
 .portal-nav__link:hover {
-  color: #0051d5;
+  color: #f27405;
 }
 
 .portal-nav__link--active {
-  color: #0051d5;
-  font-weight: 700;
-  border-bottom: 2px solid #0051d5;
-  padding-bottom: 2px;
+  color: #f27405;
 }
 
 .portal-header__actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-left: auto;
   flex-shrink: 0;
 }
 
-.portal-user {
-  font-size: 0.875rem;
+.portal-auth-btn {
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: #0b1c30;
-  max-width: 100px;
+  cursor: pointer;
+  padding: 0.45rem 0.85rem;
+}
+
+.portal-auth-btn--ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #fff;
+}
+
+.portal-auth-btn--ghost:hover:not(:disabled) {
+  border-color: #f27405;
+  color: #f27405;
+}
+
+.user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 11rem;
+  padding: 0.25rem 0.35rem 0.25rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.user-pill__icon {
+  font-size: 1.15rem;
+  color: #f27405;
+}
+
+.user-pill__name {
+  font-size: 0.8125rem;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
-.portal-link-btn {
-  background: none;
+.user-pill__logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
   border: none;
-  color: #45464d;
-  font-size: 1rem;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
-  font-family: inherit;
 }
 
-.portal-link-btn:hover {
-  color: #0051d5;
-}
-
-.portal-register-btn {
-  background: #0051d5;
+.user-pill__logout:hover {
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
 }
 
-.portal-register-btn:hover:not(:disabled) {
-  opacity: 0.9;
+.user-pill__logout .material-symbols-outlined {
+  font-size: 1.1rem;
 }
 
 .portal-footer {
@@ -291,7 +362,7 @@ async function handleSignOut() {
 }
 
 .portal-footer__link:hover {
-  color: #fff;
+  color: #f27405;
 }
 
 .portal-footer__copy {
@@ -309,22 +380,55 @@ async function handleSignOut() {
     display: none;
   }
 
+  .portal-header__inner {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .portal-header__center {
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    order: 0;
+    width: auto;
+    padding-top: 0;
+  }
+
+  .portal-header__center--open {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+  }
+
   .portal-nav {
     display: flex;
+    flex: 1;
+    justify-content: center;
   }
 
-  .portal-nav--open {
+  .portal-header__center--open .portal-nav {
     flex-direction: row;
-    width: auto;
-    order: 0;
-  }
-
-  .portal-header__inner {
-    flex-wrap: nowrap;
+    align-items: center;
   }
 
   .portal-footer__grid {
     grid-template-columns: 2fr 1fr 1fr;
+  }
+}
+
+@media (min-width: 1100px) {
+  .portal-brand__main {
+    font-size: 1.25rem;
+  }
+
+  .portal-brand__sub {
+    font-size: 0.62rem;
+  }
+
+  .portal-nav__link {
+    font-size: 0.9375rem;
   }
 }
 
@@ -333,17 +437,8 @@ async function handleSignOut() {
     display: block;
   }
 
-  .portal-nav:not(.portal-nav--open) {
+  .portal-header__center:not(.portal-header__center--open) {
     display: none;
-  }
-
-  .portal-link-btn--hide-mobile,
-  .portal-register-btn--hide-mobile {
-    display: none;
-  }
-
-  .portal-header__actions {
-    margin-left: 0;
   }
 }
 </style>
