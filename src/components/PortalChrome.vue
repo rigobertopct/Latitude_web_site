@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import Swal from 'sweetalert2'
 import { useAuthStore } from '../stores/auth'
+import NavBrandLogo from './NavBrandLogo.vue'
 
 defineProps({
   /** 'productos' | 'cotizar' | 'rastreo' */
@@ -43,10 +44,7 @@ async function handleSignOut() {
   <div class="portal-chrome">
     <header class="portal-header">
       <div class="portal-header__inner">
-        <RouterLink to="/" class="portal-brand" @click="menuOpen = false">
-          <span class="portal-brand__main">LATITUDE</span>
-          <span class="portal-brand__sub">TRANSPORT SERVICES, INC.</span>
-        </RouterLink>
+        <NavBrandLogo @click="menuOpen = false" />
 
         <button
           type="button"
@@ -156,36 +154,13 @@ async function handleSignOut() {
 .portal-header__inner {
   max-width: 96rem;
   margin: 0 auto;
-  padding: 0.65rem clamp(1rem, 3vw, 2rem);
+  padding: 0.5rem clamp(1rem, 3vw, 2rem);
+  min-height: 4.5rem;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
-}
-
-.portal-brand {
-  text-decoration: none;
-  color: inherit;
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-}
-
-.portal-brand__main {
-  font-family: 'Plus Jakarta Sans', 'Hanken Grotesk', system-ui, sans-serif;
-  font-size: 1.15rem;
-  font-weight: 800;
-  font-style: italic;
-  letter-spacing: 0.02em;
-  line-height: 1.1;
-}
-
-.portal-brand__sub {
-  font-size: 0.58rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  opacity: 0.95;
-  white-space: nowrap;
 }
 
 .portal-menu-btn {
@@ -419,14 +394,6 @@ async function handleSignOut() {
 }
 
 @media (min-width: 1100px) {
-  .portal-brand__main {
-    font-size: 1.25rem;
-  }
-
-  .portal-brand__sub {
-    font-size: 0.62rem;
-  }
-
   .portal-nav__link {
     font-size: 0.9375rem;
   }

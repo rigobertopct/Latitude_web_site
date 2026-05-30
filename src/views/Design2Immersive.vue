@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import Swal from 'sweetalert2'
 import heroImage from '../assets/images/hero-background.jpg'
+import NavBrandLogo from '../components/NavBrandLogo.vue'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
@@ -42,7 +43,7 @@ const services = [
   {
     icon: 'fa-box-open',
     title: 'Exportación',
-    text: 'Gestión integral de exportaciones hacia Latinoamérica.',
+    text: 'Gestión integral de exportaciones hacia LATAM.',
   },
   {
     icon: 'fa-file-signature',
@@ -195,10 +196,7 @@ onMounted(() => {
   <div class="landing">
     <header class="site-header">
       <div class="header-shell">
-        <a href="#" class="brand" @click.prevent="scrollTo('inicio')">
-          <span class="brand-main">LATITUDE</span>
-          <span class="brand-sub">TRANSPORT SERVICES, INC.</span>
-        </a>
+        <NavBrandLogo anchor @click="scrollTo('inicio')" />
 
         <button
           type="button"
@@ -265,7 +263,7 @@ onMounted(() => {
             Transportamos tu carga con seguridad desde
             <span class="text-orange">Estados Unidos</span>
             hacia
-            <span class="text-orange">Latinoamérica</span>
+            <span class="text-orange">Europa, el Caribe y LATAM</span>
           </h1>
           <p class="hero-lead">
             Soluciones integrales de transporte, exportación, aduanas y gestión documental.
@@ -493,35 +491,12 @@ onMounted(() => {
   width: 100%;
   max-width: 96rem;
   margin: 0 auto;
-  padding: 0.65rem 1rem;
+  padding: 0.5rem 1rem;
+  min-height: 4.5rem;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-}
-
-.brand {
-  text-decoration: none;
-  color: inherit;
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  min-width: 0;
-}
-
-.brand-main {
-  font-size: 1.15rem;
-  font-weight: 800;
-  font-style: italic;
-  letter-spacing: 0.02em;
-  line-height: 1.1;
-}
-
-.brand-sub {
-  font-size: 0.58rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  opacity: 0.95;
-  white-space: nowrap;
 }
 
 .nav-toggle {
@@ -718,7 +693,7 @@ onMounted(() => {
 }
 
 .hero-inner {
-  padding: 5rem 1rem;
+  padding: 2.5rem 1rem;
 }
 
 .hero-copy {
@@ -1327,14 +1302,6 @@ onMounted(() => {
 }
 
 @media (min-width: 1100px) {
-  .brand-main {
-    font-size: 1.25rem;
-  }
-
-  .brand-sub {
-    font-size: 0.62rem;
-  }
-
   .nav-link {
     font-size: 0.875rem;
   }
