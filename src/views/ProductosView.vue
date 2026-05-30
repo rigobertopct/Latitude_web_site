@@ -1,10 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
 import { publicGet, resolvePublicMediaUrl } from '../api/public'
 import { useCartStore } from '../stores/cart'
+import PortalChrome from '../components/PortalChrome.vue'
+import '../styles/portal.css'
 
 const cart = useCartStore()
 const { items, totalItems } = storeToRefs(cart)
@@ -12,6 +14,7 @@ const { items, totalItems } = storeToRefs(cart)
 const loading = ref(true)
 const error = ref('')
 const catalog = ref(null)
+const searchQuery = ref('')
 
 function money(n) {
   return new Intl.NumberFormat('es-US', { style: 'currency', currency: 'USD' }).format(Number(n))
@@ -21,6 +24,18 @@ function qtyFor(productId) {
   const row = items.value.find((i) => i.product_id === productId)
   return row ? Number(row.quantity) : 0
 }
+
+const products = computed(() => catalog.value?.products || [])
+
+const filteredProducts = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return products.value
+  return products.value.filter(
+    (p) =>
+      p.name?.toLowerCase().includes(q) ||
+      (p.description || '').toLowerCase().includes(q)
+  )
+})
 
 onMounted(async () => {
   loading.value = true
@@ -46,290 +61,224 @@ async function onAdd(p) {
     showConfirmButton: false,
     timer: 2800,
     timerProgressBar: true,
-    didOpen: (toast) => {
-      toast.addEventListener('mouseenter', Swal.stopTimer)
-      toast.addEventListener('mouseleave', Swal.resumeTimer)
-    },
   })
 }
 </script>
 
 <template>
-  <div class="page mat">
-    <header class="top-bar">
-      <RouterLink to="/" class="brand">Latitude</RouterLink>
-      <nav class="top-nav">
-        <RouterLink
-          v-if="totalItems > 0"
-          to="/cotizar"
-          class="nav-cart"
-          :aria-label="`Ver carrito, ${totalItems} productos`"
-        >
-          <span class="nav-cart__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2S15.9 22 17 22s2-.9 2-2-.9-2-2-2zM7.2 14h9.45c.75 0 1.41-.41 1.75-1.03l3.24-6.14a1 1 0 0 0-.08-1.02l-1.1-1.66A1 1 0 0 0 19.6 4H6.21L5.27 2H2v2h2l3.6 7.59-1.35 2.44C5.52 15.37 6.48 17 8 17h12v-2H8.42a.25.25 0 0 1-.22-.37L8.63 14h-.43zM6.38 6h12.13l.91 1H7.42L6.38 6z"
-                fill="currentColor"
-              />
-            </svg>
-          </span>
-          <span class="nav-cart__text">
-            <span class="nav-cart__title">Carrito</span>
-            <span class="nav-cart__sub">{{ totalItems }} {{ totalItems === 1 ? 'producto' : 'productos' }}</span>
-          </span>
-          <span class="nav-cart__badge">{{ totalItems > 99 ? '99+' : totalItems }}</span>
-        </RouterLink>
-        <RouterLink to="/cotizar" class="link-accent">Cotizar</RouterLink>
-      </nav>
-    </header>
+  <PortalChrome active="productos">
+    <div class="portal-page catalog-page">
+      <main class="catalog-main">
+        <div class="hero-intro">
+          <h1 class="display-title">Catálogo de productos</h1>
+          <p class="body-lg">
+            Seleccione productos y solicite una cotización en línea. Nuestra red global garantiza precisión en cada milla.
+          </p>
+        </div>
 
-    <main class="main">
-      <h1 class="title">Catálogo de productos</h1>
-      <p class="lead">Seleccione productos y solicite una cotización en línea.</p>
-
-      <p v-if="loading" class="muted">Cargando catálogo…</p>
-      <p v-else-if="error" class="err">{{ error }}</p>
-
-      <div v-else class="grid">
-        <article v-for="p in catalog?.products || []" :key="p.id" class="product-card">
-          <div class="product-card__media">
-            <img
-              v-if="p.image_url"
-              :src="resolvePublicMediaUrl(p.image_url)"
-              :alt="p.name"
-              class="product-card__img"
-              loading="lazy"
+        <div class="toolbar">
+          <div class="filter-pills">
+            <button type="button" class="pill pill--active">TODOS</button>
+          </div>
+          <div class="search-wrap">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input
+              v-model="searchQuery"
+              type="search"
+              class="search-input"
+              placeholder="Buscar productos..."
+              autocomplete="off"
             />
-            <div v-else class="product-card__img product-card__img--placeholder" aria-hidden="true">
-              <span class="product-card__placeholder-icon">📦</span>
-            </div>
           </div>
-          <div class="product-card__content">
-            <h2 class="product-card__title">{{ p.name }}</h2>
-            <p class="product-card__desc">{{ p.description || 'Sin descripción.' }}</p>
-          </div>
-          <div class="product-card__meta">
-            <span class="product-card__price-label">Precio</span>
-            <span class="product-card__price">{{ money(p.unit_price) }}</span>
-          </div>
-          <div class="product-card__actions">
-            <button type="button" class="md-filled-btn" @click="onAdd(p)">
-              <span class="md-filled-btn__icon" aria-hidden="true">+</span>
-              Añadir al carrito
-            </button>
-            <div
-              v-if="qtyFor(p.id) > 0"
-              class="qty-chip"
-              role="status"
-              aria-live="polite"
-            >
-              <span class="qty-chip__number">{{ qtyFor(p.id) }}</span>
-              <span class="qty-chip__text">
-                {{ qtyFor(p.id) === 1 ? 'unidad en tu carrito' : 'unidades en tu carrito' }}
-              </span>
-            </div>
-          </div>
-        </article>
-      </div>
+        </div>
 
-      <div class="cta-row">
-        <RouterLink to="/cotizar" class="md-outline-btn">Ir a cotizar</RouterLink>
-      </div>
-    </main>
-  </div>
+        <p v-if="loading" class="portal-muted">Cargando catálogo…</p>
+        <p v-else-if="error" class="portal-err">{{ error }}</p>
+        <p v-else-if="!filteredProducts.length" class="portal-muted">No hay productos que coincidan con su búsqueda.</p>
+
+        <div v-else class="product-grid">
+          <article v-for="(p, idx) in filteredProducts" :key="p.id" class="product-card">
+            <div class="product-card__media">
+              <img
+                v-if="p.image_url"
+                :src="resolvePublicMediaUrl(p.image_url)"
+                :alt="p.name"
+                class="product-card__img"
+                loading="lazy"
+              />
+              <div v-else class="product-card__img product-card__img--empty">
+                <span class="material-symbols-outlined">inventory_2</span>
+              </div>
+              <span v-if="idx === 0 && qtyFor(p.id) > 0" class="product-badge">EN CARRITO</span>
+              <span v-else-if="idx === 0" class="product-badge">POPULAR</span>
+            </div>
+            <div class="product-card__body">
+              <div class="product-card__head">
+                <h2 class="headline-md product-card__title">{{ p.name }}</h2>
+                <span class="material-symbols-outlined product-card__icon">local_shipping</span>
+              </div>
+              <p class="product-card__desc">{{ p.description || 'Sin descripción.' }}</p>
+              <div v-if="qtyFor(p.id) > 0" class="in-cart label-caps">
+                <span class="material-symbols-outlined">shopping_cart</span>
+                {{ qtyFor(p.id) }} en carrito
+              </div>
+            </div>
+            <div class="product-card__foot">
+              <div class="price-row">
+                <span class="label-caps price-label">PRECIO DESDE</span>
+                <span class="price-value">{{ money(p.unit_price) }}</span>
+              </div>
+              <button type="button" class="add-btn" @click="onAdd(p)">
+                <span class="material-symbols-outlined">add</span>
+                Añadir al carrito
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <div class="cta-bottom">
+          <RouterLink to="/cotizar" class="go-quote-btn">
+            <span class="material-symbols-outlined">shopping_cart_checkout</span>
+            Ir a cotizar
+            <span v-if="totalItems > 0" class="go-quote-badge">{{ totalItems > 99 ? '99+' : totalItems }}</span>
+          </RouterLink>
+        </div>
+      </main>
+    </div>
+  </PortalChrome>
 </template>
 
 <style scoped>
-/* Material 3–inspired surfaces (Roboto, 12dp cards, filled button, chips) */
-.page.mat {
-  min-height: 100vh;
-  font-family: Roboto, system-ui, -apple-system, sans-serif;
-  background: #f7f9fc;
-  color: #1c1b1f;
-  letter-spacing: 0.01em;
+.catalog-page {
+  padding-bottom: 2rem;
 }
 
-.top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.875rem 1.25rem;
-  background: var(--latitude-deep-blue);
-  color: #fff;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.2),
-    0 2px 6px rgba(0, 0, 0, 0.12);
-}
-
-.brand {
-  font-weight: 600;
-  font-size: 1.125rem;
-  letter-spacing: 0.02em;
-  color: #fff;
-  text-decoration: none;
-}
-
-.top-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.nav-cart {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.45rem 0.65rem 0.45rem 0.55rem;
-  background: #fffbff;
-  color: #1c1b1f;
-  border-radius: 20px;
-  text-decoration: none;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.08);
-  transition:
-    background 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.15s ease;
-  position: relative;
-  max-width: min(280px, 85vw);
-}
-
-.nav-cart:hover {
-  background: #fff;
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.14),
-    0 6px 16px rgba(var(--latitude-navy-rgb), 0.15);
-  transform: translateY(-1px);
-}
-
-.nav-cart:focus-visible {
-  outline: 2px solid var(--latitude-orange);
-  outline-offset: 2px;
-}
-
-.nav-cart__icon {
-  display: flex;
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: #e8eef5;
-  color: var(--latitude-deep-blue);
-  flex-shrink: 0;
-}
-
-.nav-cart__icon svg {
-  width: 22px;
-  height: 22px;
-}
-
-.nav-cart__text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.1rem;
-  min-width: 0;
-  padding-right: 0.25rem;
-}
-
-.nav-cart__title {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--latitude-deep-blue);
-  line-height: 1.2;
-}
-
-.nav-cart__sub {
-  font-size: 0.75rem;
-  font-weight: 400;
-  color: #49454f;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 140px;
-}
-
-.nav-cart__badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 1.35rem;
-  height: 1.35rem;
-  padding: 0 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: #fff;
-  background: var(--latitude-orange);
-  border-radius: 999px;
-  border: 2px solid var(--latitude-deep-blue);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.top-nav .link-accent {
-  color: var(--latitude-amber);
-  font-weight: 500;
-  font-size: 0.9375rem;
-  text-decoration: none;
-  padding: 0.5rem 0.65rem;
-  border-radius: 20px;
-  transition: background 0.2s ease;
-}
-
-.top-nav .link-accent:hover {
-  background: rgba(255, 255, 255, 0.12);
-  text-decoration: none;
-}
-
-.main {
-  max-width: 1120px;
+.catalog-main {
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem 1.25rem 3rem;
+  padding: 3rem clamp(1rem, 4vw, 3rem) 2rem;
 }
 
-.title {
-  margin: 0 0 0.35rem;
-  font-size: 1.75rem;
-  font-weight: 500;
-  color: #1c1b1f;
-  letter-spacing: 0;
+.hero-intro {
+  margin-bottom: 2rem;
+  padding-left: 1.5rem;
+  border-left: 4px solid #0051d5;
 }
 
-.lead {
-  margin: 0 0 1.75rem;
-  color: #49454f;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  font-weight: 400;
+.hero-intro .body-lg {
+  margin: 0.5rem 0 0;
   max-width: 42rem;
 }
 
-.muted {
-  color: #49454f;
-  font-size: 0.9375rem;
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.err {
-  color: #b3261e;
-  font-weight: 500;
-  font-size: 0.9375rem;
+@media (min-width: 768px) {
+  .toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 
-.grid {
+.filter-pills {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+}
+
+.pill {
+  border: 1px solid #c6c6cd;
+  background: #eff4ff;
+  color: #45464d;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.pill--active {
+  background: #0b1c30;
+  color: #fff;
+  border-color: #0b1c30;
+}
+
+.search-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 20rem;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #76777d;
+  font-size: 1.25rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 3rem;
+  border: 1px solid #c6c6cd;
+  border-radius: 12px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #0051d5;
+  box-shadow: 0 0 0 2px rgba(0, 81, 213, 0.15);
+}
+
+.product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: 1fr;
   gap: 1.5rem;
 }
 
+@media (min-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #c6c6cd;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.product-card:hover {
+  box-shadow: 0 12px 32px rgba(11, 28, 48, 0.12);
+  transform: translateY(-2px);
+}
+
 .product-card__media {
-  aspect-ratio: 4 / 3;
-  background: linear-gradient(145deg, #e8eef5 0%, #dce4ee 100%);
+  position: relative;
+  height: 16rem;
+  background: #d3e4fe;
   overflow: hidden;
 }
 
@@ -337,210 +286,173 @@ async function onAdd(p) {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
+  transition: transform 0.35s ease;
 }
 
-.product-card__img--placeholder {
+.product-card:hover .product-card__img {
+  transform: scale(1.04);
+}
+
+.product-card__img--empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 140px;
-  background: linear-gradient(145deg, #e8eef5 0%, #dce4ee 100%);
+  color: #565e74;
 }
 
-.product-card__placeholder-icon {
-  font-size: 2.5rem;
-  opacity: 0.35;
+.product-card__img--empty .material-symbols-outlined {
+  font-size: 3rem;
 }
 
-.product-card {
-  background: #fffbff;
-  border-radius: 16px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid #e3e8ef;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.06),
-    0 2px 8px rgba(var(--latitude-navy-rgb), 0.06);
-  transition:
-    box-shadow 0.25s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
+.product-badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: #f97316;
+  color: #fff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
 }
 
-.product-card:hover {
-  border-color: #c5d0e0;
-  box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.08),
-    0 8px 24px rgba(var(--latitude-navy-rgb), 0.1);
-  transform: translateY(-2px);
-}
-
-.product-card__content {
-  padding: 1.25rem 1.25rem 1rem;
+.product-card__body {
+  padding: 1.5rem;
   flex: 1;
 }
 
+.product-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
 .product-card__title {
-  margin: 0 0 0.5rem;
-  font-size: 1.125rem;
-  font-weight: 500;
-  line-height: 1.35;
-  color: #1c1b1f;
+  font-size: 1.25rem;
+}
+
+.product-card__icon {
+  color: #0051d5;
+  flex-shrink: 0;
 }
 
 .product-card__desc {
-  margin: 0;
-  font-size: 0.875rem;
+  margin: 0 0 1rem;
+  color: #45464d;
+  font-size: 1rem;
   line-height: 1.5;
-  color: #49454f;
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.product-card__meta {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
-  background: linear-gradient(180deg, #f4f6fa 0%, #eef2f7 100%);
-  border-top: 1px solid #e3e8ef;
-}
-
-.product-card__price-label {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--latitude-deep-blue);
-}
-
-.product-card__price {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #e65100;
-  letter-spacing: -0.02em;
-}
-
-.product-card__actions {
-  padding: 1rem 1.25rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.md-filled-btn {
+.in-cart {
   display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #0051d5;
+  font-size: 11px;
+}
+
+.in-cart .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.product-card__foot {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #c6c6cd;
+  padding-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.price-label {
+  color: #76777d;
+}
+
+.price-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f97316;
+}
+
+.add-btn {
+  width: 100%;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  width: 100%;
-  min-height: 40px;
-  padding: 0 1.5rem;
+  padding: 1rem;
   border: none;
-  border-radius: 20px;
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  border-radius: 8px;
+  background: #f97316;
   color: #fff;
-  background: var(--latitude-orange);
+  font-weight: 700;
+  font-size: 1rem;
+  font-family: inherit;
   cursor: pointer;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.2),
-    0 1px 3px rgba(var(--latitude-orange-rgb), 0.35);
-  transition:
-    background 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.15s ease;
+  transition: opacity 0.2s, transform 0.15s;
 }
 
-.md-filled-btn:hover {
-  background: #f57c00;
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.18),
-    0 4px 12px rgba(var(--latitude-orange-rgb), 0.35);
+.add-btn:hover {
+  opacity: 0.92;
 }
 
-.md-filled-btn:active {
+.add-btn:active {
   transform: scale(0.98);
 }
 
-.md-filled-btn:focus-visible {
-  outline: 2px solid var(--latitude-deep-blue);
-  outline-offset: 2px;
-}
-
-.md-filled-btn__icon {
-  font-size: 1.15rem;
-  font-weight: 600;
-  line-height: 1;
-  opacity: 0.95;
-}
-
-.qty-chip {
+.cta-bottom {
+  margin-top: 3rem;
   display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.5rem 0.75rem;
-  background: #e8f0fe;
-  border-radius: 12px;
-  border: 1px solid #c5d8f0;
-}
-
-.qty-chip__number {
-  display: flex;
-  align-items: center;
   justify-content: center;
-  min-width: 2rem;
-  height: 2rem;
-  padding: 0 0.4rem;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--latitude-deep-blue);
+}
+
+.go-quote-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 3rem;
+  border: 2px solid #0051d5;
+  border-radius: 12px;
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(var(--latitude-navy-rgb), 0.12);
+  color: #0051d5;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgba(0, 81, 213, 0.12);
+  transition: background 0.25s, color 0.25s;
 }
 
-.qty-chip__text {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #1c1b1f;
-  line-height: 1.3;
-  flex: 1;
+.go-quote-btn:hover {
+  background: #0051d5;
+  color: #fff;
 }
 
-.md-outline-btn {
+.go-quote-btn:hover .go-quote-badge {
+  background: #fff;
+  color: #0051d5;
+}
+
+.go-quote-badge {
+  background: #0051d5;
+  color: #fff;
+  font-size: 10px;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 6px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
-  padding: 0 1.5rem;
-  border-radius: 20px;
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--latitude-deep-blue);
-  background: transparent;
-  border: 1px solid #747775;
-  text-decoration: none;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.md-outline-btn:hover {
-  background: rgba(var(--latitude-navy-rgb), 0.06);
-  border-color: var(--latitude-deep-blue);
-}
-
-.cta-row {
-  margin-top: 2.25rem;
 }
 </style>
