@@ -2,21 +2,138 @@
 import { ref, watch, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import Swal from 'sweetalert2'
-import heroPoster from '../assets/images/hero-background.jpg'
+import heroImage from '../assets/images/hero-background.jpg'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const authLoading = ref(false)
+const mobileNavOpen = ref(false)
+
+const WHATSAPP_URL = 'https://wa.me/13057759737'
 
 const navLinks = [
   { id: 'inicio', label: 'Inicio' },
-  { id: 'quienes-somos', label: 'Quiénes Somos' },
+  { id: 'por-que-elegir', label: 'Quiénes Somos' },
   { id: 'servicios', label: 'Servicios' },
+  { id: 'cobertura', label: 'Cobertura' },
+  { id: 'productos', label: 'Productos', route: '/productos' },
   { id: 'contacto', label: 'Contacto' },
 ]
 
+const stats = [
+  { icon: 'fa-award', title: '25+', subtitle: 'Años de experiencia' },
+  { icon: 'fa-globe-americas', title: 'Cobertura', subtitle: 'Internacional' },
+  { icon: 'fa-file-invoice', title: 'Servicio de', subtitle: 'Aduanas' },
+  { icon: 'fa-pen-nib', title: 'Gestión', subtitle: 'Notarial' },
+  { icon: 'fa-user-tie', title: 'Atención', subtitle: 'Personalizada', wide: true },
+]
+
+const services = [
+  {
+    icon: 'fa-truck-moving',
+    title: 'Transporte Internacional',
+    text: 'Transporte seguro de vehículos, carga comercial y envíos especiales.',
+  },
+  {
+    icon: 'fa-box-open',
+    title: 'Exportación',
+    text: 'Gestión integral de exportaciones hacia Latinoamérica.',
+  },
+  {
+    icon: 'fa-file-signature',
+    title: 'Aduanas',
+    text: 'Asesoría y trámites aduanales para garantizar procesos rápidos y seguros.',
+  },
+  {
+    icon: 'fa-gavel',
+    title: 'Notaría',
+    text: 'Documentación legal, poderes y certificaciones internacionales.',
+  },
+  {
+    icon: 'fa-network-wired',
+    title: 'Logística Integral',
+    text: 'Coordinación completa puerta a puerta para tu tranquilidad.',
+  },
+]
+
+const whyChoose = [
+  'Atención personalizada',
+  'Equipo especializado',
+  'Seguimiento de carga',
+  'Seguridad garantizada',
+  'Procesos rápidos',
+  'Soporte permanente',
+]
+
+const processSteps = [
+  {
+    n: 1,
+    icon: 'fa-file-invoice-dollar',
+    title: 'Solicita tu cotización',
+    text: 'Cuéntanos qué necesitas enviar y te brindamos la mejor opción.',
+  },
+  {
+    n: 2,
+    icon: 'fa-box',
+    title: 'Recibimos tu carga',
+    text: 'Recogemos tu mercancía en el punto acordado con seguridad.',
+  },
+  {
+    n: 3,
+    icon: 'fa-clipboard-list',
+    title: 'Gestionamos documentos',
+    text: 'Nos encargamos de todos los trámites y procesos aduanales.',
+  },
+  {
+    n: 4,
+    icon: 'fa-ship',
+    title: 'Transportamos',
+    text: 'Movemos tu carga con puntualidad y responsabilidad.',
+  },
+  {
+    n: 5,
+    icon: 'fa-circle-check',
+    title: 'Entrega final',
+    text: 'Tu carga llega a destino de forma segura y en el tiempo acordado.',
+  },
+]
+
+const testimonials = [
+  {
+    quote: 'Excelente servicio, enviaron mi vehículo sin inconvenientes. Muy profesionales.',
+    author: 'Carlos M.',
+  },
+  {
+    quote: 'Muy eficientes en todo el proceso de exportación. 100% recomendados.',
+    author: 'María R.',
+  },
+]
+
+const destinationsCol1 = [
+  { flag: '🇺🇸', name: 'Estados Unidos' },
+  { flag: '🇲🇽', name: 'México' },
+  { flag: '🇨🇺', name: 'Cuba' },
+  { flag: '🇩🇴', name: 'República Dominicana' },
+]
+
+const destinationsCol2 = [
+  { flag: '🇨🇴', name: 'Colombia' },
+  { flag: '🇵🇦', name: 'Panamá' },
+  { flag: '🇭🇳', name: 'Honduras' },
+  { flag: '🇬🇹', name: 'Guatemala' },
+]
+
 function scrollTo(id) {
+  mobileNavOpen.value = false
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+}
+
+function onNavClick(link) {
+  if (link.route) {
+    mobileNavOpen.value = false
+    return
+  }
+  scrollTo(link.id)
 }
 
 watch(() => auth.blockedMessage, (msg) => {
@@ -25,7 +142,7 @@ watch(() => auth.blockedMessage, (msg) => {
       icon: 'warning',
       title: 'Cuenta desactivada',
       text: msg,
-      confirmButtonColor: '#001b48',
+      confirmButtonColor: '#0a1b3d',
     })
     auth.clearBlockedMessage()
   }
@@ -38,13 +155,13 @@ async function handleSignInGoogle() {
     await auth.signInWithGoogle()
   } catch (err) {
     if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-      // Usuario cerró el popup, no mostrar error
+      // Usuario cerró el popup
     } else {
       await Swal.fire({
         icon: 'error',
         title: 'Error al iniciar sesión',
         text: err.message || 'No se pudo iniciar sesión con Google.',
-        confirmButtonColor: '#001b48',
+        confirmButtonColor: '#0a1b3d',
       })
     }
   } finally {
@@ -63,154 +180,274 @@ onMounted(() => {
         if (entry.isIntersecting) entry.target.classList.add('reveal')
       })
     },
-    { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
   )
   document.querySelectorAll('.animate-on-scroll').forEach((el) => observer.observe(el))
 })
 </script>
 
 <template>
-  <div class="layout">
-    <header class="nav">
-      <a href="#" class="nav-brand" @click.prevent="scrollTo('inicio')">
-        <span class="brand-main">LATITUDE</span>
-        <span class="brand-tag">TRANSPORT SERVICES, INC.</span>
-      </a>
-      <nav class="nav-links">
-        <a v-for="link in navLinks" :key="link.id" href="#" class="nav-link" @click.prevent="scrollTo(link.id)">{{ link.label }}</a>
-        <RouterLink to="/productos" class="nav-link">Productos</RouterLink>
-        <RouterLink to="/cotizar" class="nav-link">Cotizar</RouterLink>
-        <template v-if="auth.isLoggedIn">
-          <span class="nav-user">Hola, {{ auth.displayName || 'Usuario' }}</span>
-          <button type="button" class="nav-btn nav-btn-outline" @click="handleSignOut">Cerrar sesión</button>
-        </template>
-        <template v-else>
-          <button type="button" class="nav-btn-google" :disabled="authLoading" @click="handleSignInGoogle">
-            <span class="nav-btn-google-icon-wrap" aria-hidden="true">
-              <svg v-if="!authLoading" class="nav-btn-google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              <span v-else class="nav-btn-google-spinner" aria-hidden="true"></span>
-            </span>
-            <span class="nav-btn-google-text">{{ authLoading ? 'Conectando…' : 'Iniciar sesión' }}</span>
-          </button>
-        </template>
-      </nav>
+  <div class="landing">
+    <header class="site-header">
+      <div class="container header-inner">
+        <a href="#" class="brand" @click.prevent="scrollTo('inicio')">
+          <span class="brand-main">LATITUDE</span>
+          <span class="brand-sub">TRANSPORT SERVICES, INC.</span>
+        </a>
+
+        <button
+          type="button"
+          class="nav-toggle"
+          :aria-expanded="mobileNavOpen"
+          aria-label="Menú"
+          @click="mobileNavOpen = !mobileNavOpen"
+        >
+          <i class="fas" :class="mobileNavOpen ? 'fa-times' : 'fa-bars'"></i>
+        </button>
+
+        <nav class="site-nav" :class="{ 'site-nav--open': mobileNavOpen }">
+          <template v-for="link in navLinks" :key="link.label">
+            <RouterLink
+              v-if="link.route"
+              :to="link.route"
+              class="nav-link"
+              @click="mobileNavOpen = false"
+            >
+              {{ link.label }}
+            </RouterLink>
+            <a
+              v-else
+              href="#"
+              class="nav-link"
+              @click.prevent="onNavClick(link)"
+            >
+              {{ link.label }}
+            </a>
+          </template>
+        </nav>
+
+        <div class="header-actions">
+          <RouterLink to="/cotizar" class="btn btn-orange btn-sm">
+            Solicitar cotización <i class="fas fa-arrow-right"></i>
+          </RouterLink>
+          <a :href="WHATSAPP_URL" target="_blank" rel="noopener noreferrer" class="whatsapp-icon" aria-label="WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+          </a>
+          <div class="header-auth">
+            <template v-if="auth.isLoggedIn">
+              <span class="auth-user">Hola, {{ auth.displayName || 'Usuario' }}</span>
+              <button type="button" class="btn btn-ghost-sm" @click="handleSignOut">Salir</button>
+            </template>
+            <button
+              v-else
+              type="button"
+              class="btn btn-outline-sm"
+              :disabled="authLoading"
+              @click="handleSignInGoogle"
+            >
+              {{ authLoading ? 'Conectando…' : 'Iniciar sesión' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </header>
 
-    <section id="inicio" class="hero">
-      <div class="hero-bg" aria-hidden="true">
-        <video
-          class="hero-video"
-          autoplay
-          muted
-          loop
-          playsinline
-          :poster="heroPoster"
+    <section id="inicio" class="hero" :style="{ '--hero-image': `url(${heroImage})` }">
+      <div class="container hero-inner">
+        <div class="hero-copy">
+          <span class="hero-kicker">25+ Años de Experiencia</span>
+          <h1 class="hero-title">
+            Transportamos tu carga con seguridad desde
+            <span class="text-orange">Estados Unidos</span>
+            hacia
+            <span class="text-orange">Latinoamérica</span>
+          </h1>
+          <p class="hero-lead">
+            Soluciones integrales de transporte, exportación, aduanas y gestión documental.
+          </p>
+          <div class="hero-actions">
+            <RouterLink to="/cotizar" class="btn btn-orange">
+              <i class="fas fa-calculator"></i> Solicitar cotización
+            </RouterLink>
+            <a :href="WHATSAPP_URL" target="_blank" rel="noopener noreferrer" class="btn btn-outline-white">
+              <i class="fab fa-whatsapp"></i> Hablar por WhatsApp
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="stats-bar">
+      <div class="container stats-grid">
+        <div
+          v-for="(item, i) in stats"
+          :key="i"
+          class="stat-item"
+          :class="{ 'stat-item--wide': item.wide }"
         >
-          <source src="/hero-video.mp4" type="video/mp4">
-        </video>
+          <i class="fas text-orange" :class="item.icon"></i>
+          <span class="stat-title">{{ item.title }}</span>
+          <span class="stat-sub">{{ item.subtitle }}</span>
+        </div>
       </div>
-      <div class="hero-overlay"></div>
-      <div class="hero-shine"></div>
-      <div class="hero-content">
-        <h1 class="hero-title">LATITUDE</h1>
-        <span class="hero-accent"></span>
-        <p class="hero-tagline">TRANSPORT SERVICES, INC.</p>
-        <p class="hero-sub">Rapidez, seguridad y eficiencia en transporte y exportación</p>
-        <RouterLink to="/cotizar" class="hero-cta">Solicitar cotización</RouterLink>
-      </div>
-      <div class="hero-scroll-hint"><span class="scroll-dot"></span></div>
-    </section>
+    </div>
 
-    <section class="value-strip animate-on-scroll">
-      <div class="value-strip-inner">
-        <div class="value-item"><span class="value-num">25+</span><span class="value-label">Años</span></div>
-        <div class="value-item"><span class="value-num">USA</span><span class="value-label">Cobertura</span></div>
-        <div class="value-item"><span class="value-num">Aduanas</span><span class="value-label">Exportación</span></div>
-        <div class="value-item"><span class="value-num">Notaría</span><span class="value-label">Servicios</span></div>
+    <section id="servicios" class="section section-muted animate-on-scroll">
+      <div class="container">
+        <h2 class="section-heading">Nuestros Servicios</h2>
+        <div class="services-grid">
+          <article v-for="svc in services" :key="svc.title" class="service-card">
+            <div class="service-icon"><i class="fas" :class="svc.icon"></i></div>
+            <h3>{{ svc.title }}</h3>
+            <p>{{ svc.text }}</p>
+          </article>
+        </div>
       </div>
     </section>
 
-    <section id="quienes-somos" class="about animate-on-scroll">
-      <div class="about-wrap">
-        <h2 class="section-title">Quiénes Somos</h2>
-        <div class="about-content">
-          <div class="about-text">
-            <p>Latitude fue fundada en febrero del 2019 por una mujer luchadora, dedicada y apasionada por su trabajo.</p>
-            <p>Con más de 25 años de experiencia en la industria de la exportación, hemos brindado apoyo a nuestra comunidad latina en Centroamérica, Sudamérica, México y El Caribe, atendiendo cada una de sus necesidades con compromiso y responsabilidad.</p>
-            <p>En Latitude Transport hacemos que sus vehículos y cargas en general se transporten con rapidez, seguridad y eficiencia, ofreciendo siempre el profesionalismo que nos caracteriza.</p>
-          </div>
-          <div class="about-visual">
-            <div class="about-card">
-              <span class="about-stat">25+</span>
-              <span class="about-stat-label">años de experiencia</span>
-            </div>
+    <section id="por-que-elegir" class="section animate-on-scroll">
+      <div class="container why-grid">
+        <div class="why-media">
+          <img :src="heroImage" alt="Operaciones logísticas Latitude" class="why-img" />
+        </div>
+        <div class="why-content">
+          <span class="kicker">¿POR QUÉ ELEGIR LATITUDE?</span>
+          <h2 class="why-title">Más de 25 años conectando Estados Unidos con Latinoamérica</h2>
+          <p class="why-lead">
+            Nos especializamos en ofrecer soluciones logísticas confiables, rápidas y eficientes.
+          </p>
+          <ul class="why-list">
+            <li v-for="item in whyChoose" :key="item">
+              <i class="fas fa-check-circle text-orange"></i>
+              <span>{{ item }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-muted animate-on-scroll">
+      <div class="container">
+        <h2 class="section-heading">Cómo funciona nuestro proceso</h2>
+        <div class="process-grid">
+          <div v-for="step in processSteps" :key="step.n" class="process-step">
+            <div class="process-num">{{ step.n }}</div>
+            <div class="process-icon"><i class="fas" :class="step.icon"></i></div>
+            <h4>{{ step.title }}</h4>
+            <p>{{ step.text }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="servicios" class="services animate-on-scroll">
-      <div class="services-wrap">
-        <h2 class="section-title">Servicios que Ofrecemos</h2>
-        <ul class="services-grid">
-          <li class="service-card">
-            <span class="service-icon-wrap"><span class="service-icon">🚛</span></span>
-            <p>Movemos todo tipo de carga y vehículos dentro de los Estados Unidos.</p>
-            <span class="service-arrow">→</span>
-          </li>
-          <li class="service-card">
-            <span class="service-icon-wrap"><span class="service-icon">📋</span></span>
-            <p>Servicios aduanales en USA para todo tipo de exportación.</p>
-            <span class="service-arrow">→</span>
-          </li>
-          <li class="service-card">
-            <span class="service-icon-wrap"><span class="service-icon">📜</span></span>
-            <p>Servicios notariales.</p>
-            <span class="service-arrow">→</span>
-          </li>
-          <li class="service-card">
-            <span class="service-icon-wrap"><span class="service-icon">🌐</span></span>
-            <p>Traducciones para las licencias en las diferentes subastas de USA.</p>
-            <span class="service-arrow">→</span>
-          </li>
-        </ul>
+    <section id="cobertura" class="section animate-on-scroll">
+      <div class="container coverage-grid">
+        <div class="testimonials">
+          <h3>Lo que dicen nuestros clientes</h3>
+          <div class="testimonial-list">
+            <blockquote v-for="t in testimonials" :key="t.author" class="testimonial-card">
+              <div class="stars">
+                <i v-for="n in 5" :key="n" class="fas fa-star"></i>
+              </div>
+              <p>"{{ t.quote }}"</p>
+              <cite>— {{ t.author }}</cite>
+            </blockquote>
+          </div>
+          <div class="testimonial-dots" aria-hidden="true">
+            <span class="dot dot--active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+        </div>
+
+        <div class="coverage">
+          <h3>Cobertura Internacional</h3>
+          <div class="map-wrap">
+            <img :src="heroImage" alt="Cobertura internacional Latitude" class="map-img" />
+          </div>
+          <div class="destinations">
+            <ul>
+              <li v-for="d in destinationsCol1" :key="d.name">
+                <span>{{ d.flag }}</span> {{ d.name }}
+              </li>
+            </ul>
+            <ul>
+              <li v-for="d in destinationsCol2" :key="d.name">
+                <span>{{ d.flag }}</span> {{ d.name }}
+              </li>
+            </ul>
+          </div>
+          <button type="button" class="btn btn-outline-navy" @click="scrollTo('cobertura')">
+            Ver todos los destinos
+          </button>
+        </div>
       </div>
     </section>
 
-    <footer id="contacto" class="contact animate-on-scroll">
-      <div class="contact-divider"></div>
-      <div class="contact-wrap">
-        <h2 class="section-title section-title-light">Contacto</h2>
-        <div class="contact-grid">
-          <a href="https://maps.google.com/?q=121+NW+33rd+Ave+Miami+FL+33125" target="_blank" rel="noopener" class="contact-item">
-            <span class="contact-icon">📍</span>
-            <span>121 NW 33rd Ave<br>Miami, FL 33125</span>
-          </a>
-          <a href="tel:+13057759737" class="contact-item">
-            <span class="contact-icon">📞</span>
-            <span>(305) 775-9737</span>
-          </a>
-          <a href="mailto:latitudetrans@gmail.com" class="contact-item">
-            <span class="contact-icon">✉️</span>
-            <span>latitudetrans@gmail.com</span>
+    <section class="cta-band">
+      <div class="container cta-inner">
+        <div class="cta-text">
+          <h2>¿Necesitas transportar o exportar tu carga?</h2>
+          <p>Más de 25 años ofreciendo soluciones rápidas, seguras y eficientes.</p>
+        </div>
+        <div class="cta-actions">
+          <RouterLink to="/cotizar" class="btn btn-orange">Solicitar cotización</RouterLink>
+          <a :href="WHATSAPP_URL" target="_blank" rel="noopener noreferrer" class="btn btn-outline-white">
+            <i class="fab fa-whatsapp"></i> Hablar por WhatsApp
           </a>
         </div>
-        <div class="contact-social">
-          <a href="https://www.instagram.com/latitudetransinc/" target="_blank" rel="noopener" class="social-link social-link-icon" aria-label="Instagram">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-            </svg>
-          </a>
-          <a href="https://www.facebook.com/latitudetrans/" target="_blank" rel="noopener" class="social-link social-link-icon" aria-label="Facebook">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-            </svg>
-          </a>
+      </div>
+    </section>
+
+    <footer id="contacto" class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <h4 class="footer-brand">LATITUDE</h4>
+          <p class="footer-brand-sub">TRANSPORT SERVICES, INC.</p>
+          <p class="footer-tagline">Transportamos tu confianza, entregamos soluciones.</p>
+        </div>
+        <div>
+          <h5>Enlaces rápidos</h5>
+          <ul class="footer-links">
+            <li><a href="#" @click.prevent="scrollTo('inicio')">Inicio</a></li>
+            <li><a href="#" @click.prevent="scrollTo('por-que-elegir')">Quiénes Somos</a></li>
+            <li><a href="#" @click.prevent="scrollTo('servicios')">Servicios</a></li>
+            <li><a href="#" @click.prevent="scrollTo('cobertura')">Cobertura</a></li>
+            <li><RouterLink to="/productos">Productos</RouterLink></li>
+            <li><a href="#" @click.prevent="scrollTo('contacto')">Contacto</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Servicios</h5>
+          <ul class="footer-links">
+            <li v-for="svc in services" :key="'f-' + svc.title">
+              <a href="#" @click.prevent="scrollTo('servicios')">{{ svc.title }}</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h5>Contacto</h5>
+          <ul class="footer-contact">
+            <li><i class="fas fa-phone-alt text-orange"></i><span>+1 (305) 775-9737</span></li>
+            <li><i class="fas fa-envelope text-orange"></i><span>info@latitudetransport.com</span></li>
+            <li><i class="fas fa-map-marker-alt text-orange"></i><span>Miami, Florida, USA</span></li>
+          </ul>
+          <div class="footer-social">
+            <a href="https://www.facebook.com/latitudetrans/" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://www.instagram.com/latitudetransinc/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        <p>© 2024 Latitude Transport Services, Inc. Todos los derechos reservados.</p>
+        <div class="cert-badge">
+          <i class="fas fa-shield-alt text-orange"></i>
+          <div>Certified<br />&amp; Insured</div>
         </div>
       </div>
     </footer>
@@ -218,245 +455,814 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.layout { min-height: 100vh; }
+.landing {
+  --lat-navy: #0a1b3d;
+  --lat-orange: #f27405;
+  --lat-navy-rgb: 10, 27, 61;
+  color: #1f2937;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
 
-.nav {
+.container {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.text-orange {
+  color: var(--lat-orange);
+}
+
+/* Header */
+.site-header {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 50;
+  background: var(--lat-navy);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.header-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 2rem;
-  background: rgba(var(--latitude-navy-rgb), 0.95);
-  backdrop-filter: blur(10px);
-  color: var(--latitude-white);
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  flex-wrap: wrap;
 }
-.nav-brand { text-decoration: none; color: inherit; display: flex; flex-direction: column; }
-.brand-main { font-size: 1.35rem; font-weight: 800; font-style: italic; letter-spacing: 0.02em; }
-.brand-tag { font-size: 0.65rem; font-weight: 600; opacity: 0.95; letter-spacing: 0.08em; }
-.nav-links { display: flex; gap: 1.5rem; align-items: center; }
-.nav-link {
-  color: var(--latitude-white);
+
+.brand {
   text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  position: relative;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
-.nav-link::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -4px;
-  width: 0;
-  height: 2px;
-  background: var(--latitude-orange);
-  transition: width 0.3s ease;
-}
-.nav-link:hover { color: var(--latitude-orange); }
-.nav-link:hover::after { width: 100%; }
 
-.nav-user { font-size: 0.9rem; font-weight: 500; opacity: 0.95; }
-.nav-btn {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+.brand-main {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
 }
-.nav-btn-outline {
+
+.brand-sub {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  opacity: 0.95;
+}
+
+.nav-toggle {
+  display: none;
   background: transparent;
-  color: var(--latitude-white);
-  border-color: rgba(255, 255, 255, 0.6);
+  border: none;
+  color: #fff;
+  font-size: 1.35rem;
+  cursor: pointer;
+  padding: 0.35rem;
 }
-.nav-btn-outline:hover { border-color: var(--latitude-white); background: rgba(255, 255, 255, 0.1); }
-.nav-btn-primary {
-  background: var(--latitude-orange);
-  color: var(--latitude-white);
-  border-color: var(--latitude-orange);
-}
-.nav-btn-primary:hover { filter: brightness(1.1); }
 
-/* Botón Iniciar sesión: icono Google, fondo transparente, borde naranja (como botón cotizar) */
-.nav-btn-google {
+.site-nav {
+  display: none;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.site-nav--open {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  order: 4;
+  padding: 0.5rem 0 0.75rem;
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: var(--lat-orange);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.header-auth {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-user {
+  font-size: 0.8rem;
+  font-weight: 500;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.whatsapp-icon {
+  color: #fff;
+  font-size: 1.35rem;
+  transition: color 0.2s;
+}
+
+.whatsapp-icon:hover {
+  color: #25d366;
+}
+
+/* Buttons */
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 40px;
-  padding: 0 20px;
-  font-family: 'Roboto', system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-  color: var(--latitude-white);
-  background: transparent;
-  border: 2px solid var(--latitude-orange);
-  border-radius: 8px;
-  box-sizing: border-box;
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-.nav-btn-google:hover:not(:disabled) {
-  background: rgba(var(--latitude-orange-rgb), 0.15);
-  border-color: var(--latitude-orange);
-  color: var(--latitude-white);
-  box-shadow: 0 0 12px rgba(var(--latitude-orange-rgb), 0.25);
-}
-.nav-btn-google:active:not(:disabled) {
-  background: rgba(var(--latitude-orange-rgb), 0.25);
-}
-.nav-btn-google:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-.nav-btn-google-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-.nav-btn-google-icon {
-  width: 18px;
-  height: 18px;
-}
-.nav-btn-google-text {
-  white-space: nowrap;
-}
-.nav-btn-google-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #e8eaed;
-  border-top-color: #4285f4;
-  border-radius: 50%;
-  animation: nav-google-spin 0.7s linear infinite;
-}
-@keyframes nav-google-spin {
-  to { transform: rotate(360deg); }
-}
-
-.hero {
-  position: relative;
-  min-height: 85vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-.hero-bg {
-  position: absolute;
-  inset: 0;
-}
-.hero-video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(var(--latitude-navy-rgb), 0.35) 0%, rgba(var(--latitude-navy-rgb), 0.5) 50%, rgba(var(--latitude-navy-rgb), 0.65) 100%);
-  pointer-events: none;
-}
-.hero-shine {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.06) 45%, transparent 55%);
-  animation: shine 8s ease-in-out infinite;
-  pointer-events: none;
-}
-.hero-content { position: relative; text-align: center; padding: 2rem; animation: fadeInUp 1s ease-out; }
-.hero-title { margin: 0; font-size: clamp(2.8rem, 7vw, 4.5rem); font-weight: 800; font-style: italic; color: var(--latitude-cream); letter-spacing: 0.02em; text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45); }
-.hero-accent { display: block; width: 80px; height: 4px; background: var(--latitude-orange); margin: 1rem auto 0; border-radius: 2px; }
-.hero-tagline { margin: 0.75rem 0 0; font-size: clamp(0.9rem, 2vw, 1.15rem); font-weight: 600; color: var(--latitude-cream); letter-spacing: 0.1em; text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35); }
-.hero-sub { margin: 1.5rem 0 2rem; font-size: 1.05rem; font-weight: 700; color: var(--latitude-cream); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45); max-width: 440px; margin-left: auto; margin-right: auto; }
-.hero-cta {
-  display: inline-block;
-  padding: 1rem 2.25rem;
-  background: var(--latitude-orange);
-  color: var(--latitude-white);
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
   font-weight: 700;
   text-decoration: none;
-  border-radius: 8px;
-  transition: filter 0.2s, transform 0.2s;
-  box-shadow: 0 4px 24px rgba(var(--latitude-orange-rgb), 0.4);
-  animation: pulse-soft 3s ease-in-out infinite;
-}
-.hero-cta:hover { filter: brightness(1.15); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(var(--latitude-orange-rgb), 0.5); animation: none; }
-.hero-scroll-hint { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); }
-.scroll-dot { display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--latitude-orange); animation: scrollBounce 2s ease-in-out infinite; }
-
-.value-strip { background: var(--latitude-blue-gray); padding: 2rem; }
-.value-strip-inner { max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center; }
-.value-item { padding: 1rem; background: rgba(255, 255, 255, 0.6); border-radius: 12px; }
-.value-num { display: block; font-size: 1.5rem; font-weight: 800; color: var(--latitude-orange); }
-.value-label { font-size: 0.85rem; font-weight: 600; color: var(--latitude-deep-blue); }
-
-.animate-on-scroll { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease, transform 0.7s ease; }
-.animate-on-scroll.reveal { opacity: 1; transform: translateY(0); }
-
-.about { background: var(--latitude-white); padding: 4rem 2rem; }
-.about-wrap { max-width: 960px; margin: 0 auto; }
-.section-title { margin: 0 0 2rem; font-size: 1.75rem; font-weight: 800; color: var(--latitude-deep-blue); }
-.about-content { display: grid; grid-template-columns: 1fr auto; gap: 2.5rem; align-items: start; }
-.about-text p { margin: 0 0 1rem; line-height: 1.65; color: #2d3748; }
-.about-card { background: var(--latitude-blue-gray); padding: 2rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 20px rgba(var(--latitude-navy-rgb), 0.12); transition: transform 0.3s, box-shadow 0.3s; }
-.about-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(var(--latitude-navy-rgb), 0.18); }
-.about-stat { display: block; font-size: 2.5rem; font-weight: 800; color: var(--latitude-orange); }
-.about-stat-label { font-size: 0.9rem; color: var(--latitude-deep-blue); font-weight: 600; }
-
-.services { background: var(--latitude-blue-gray); padding: 4rem 2rem; }
-.services-wrap { max-width: 960px; margin: 0 auto; }
-.services-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
-.service-card {
-  padding: 1.75rem;
-  border-radius: 12px;
-  background: var(--latitude-white);
   border: 2px solid transparent;
-  transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
-  position: relative;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  font-size: 0.95rem;
+  white-space: nowrap;
 }
-.service-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(var(--latitude-navy-rgb), 0.12); border-color: var(--latitude-orange); }
-.service-icon-wrap { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: rgba(var(--latitude-orange-rgb), 0.2); margin-bottom: 1rem; }
-.service-icon { font-size: 1.5rem; }
-.service-card p { margin: 0; line-height: 1.55; color: #2d3748; font-size: 0.95rem; }
-.service-arrow { position: absolute; bottom: 1.25rem; right: 1.25rem; color: var(--latitude-orange); font-size: 1.25rem; font-weight: 700; opacity: 0; transform: translateX(-8px); transition: opacity 0.3s, transform 0.3s; }
-.service-card:hover .service-arrow { opacity: 1; transform: translateX(0); }
 
-.contact { background: var(--latitude-deep-blue); color: var(--latitude-white); padding: 4rem 2rem; position: relative; }
-.contact-divider { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 4px; background: var(--latitude-orange); border-radius: 0 0 2px 2px; }
-.contact-wrap { max-width: 720px; margin: 0 auto; text-align: center; }
-.section-title-light { color: var(--latitude-white); }
-.contact-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; margin-bottom: 2rem; }
-.contact-item { display: flex; align-items: flex-start; gap: 0.75rem; color: var(--latitude-white); text-decoration: none; text-align: left; transition: color 0.2s, transform 0.2s; }
-.contact-item:hover { color: var(--latitude-orange); transform: translateY(-2px); }
-.contact-icon { font-size: 1.25rem; }
-.contact-social { display: flex; justify-content: center; gap: 1rem; }
-.social-link { text-decoration: none; transition: transform 0.2s, box-shadow 0.2s; }
-.social-link-icon {
+.btn-orange {
+  background: var(--lat-orange);
+  color: #fff;
+}
+
+.btn-orange:hover {
+  background: #e06604;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-outline-white {
+  background: transparent;
+  border-color: #fff;
+  color: #fff;
+}
+
+.btn-outline-white:hover {
+  background: #fff;
+  color: var(--lat-navy);
+}
+
+.btn-outline-navy {
+  background: transparent;
+  border: 2px solid var(--lat-navy);
+  color: var(--lat-navy);
+}
+
+.btn-outline-navy:hover {
+  background: var(--lat-navy);
+  color: #fff;
+}
+
+.btn-outline-sm {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  color: #fff;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.btn-ghost-sm {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Hero */
+.hero {
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  background:
+    linear-gradient(rgba(10, 27, 61, 0.8), rgba(10, 27, 61, 0.4)),
+    var(--hero-image) center / cover no-repeat;
+}
+
+.hero-inner {
+  padding: 5rem 1rem;
+}
+
+.hero-copy {
+  max-width: 42rem;
+}
+
+.hero-kicker {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.hero-title {
+  margin: 0 0 1.5rem;
+  font-size: clamp(2rem, 5vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.hero-lead {
+  margin: 0 0 2rem;
+  font-size: 1.125rem;
+  color: #e5e7eb;
+  line-height: 1.6;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Stats */
+.stats-bar {
+  background: var(--lat-navy);
+  padding: 2rem 1rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  text-align: center;
+  color: #fff;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.stat-item i {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.stat-title {
+  font-weight: 700;
+}
+
+.stat-sub {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.stat-item--wide {
+  grid-column: span 2;
+}
+
+/* Sections */
+.section {
+  padding: 5rem 1rem;
+}
+
+.section-muted {
+  background: #f9fafb;
+}
+
+.section-heading {
+  margin: 0 0 3rem;
+  text-align: center;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--lat-navy);
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.service-card {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-top: 4px solid var(--lat-orange);
+}
+
+.service-icon {
+  color: var(--lat-navy);
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.service-card h3 {
+  margin: 0 0 0.75rem;
+  color: var(--lat-navy);
+  font-size: 1rem;
+}
+
+.service-card p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.55;
+}
+
+.why-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.why-img {
+  width: 100%;
+  border-radius: 1rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  display: block;
+}
+
+.kicker {
+  color: var(--lat-orange);
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+}
+
+.why-title {
+  margin: 0.5rem 0 1.5rem;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 700;
+  color: var(--lat-navy);
+  line-height: 1.2;
+}
+
+.why-lead {
+  margin: 0 0 2rem;
+  color: #4b5563;
+  line-height: 1.65;
+}
+
+.why-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.why-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.process-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+}
+
+.process-step {
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.process-num {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: var(--lat-orange);
+  color: #fff;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  background: var(--latitude-orange);
-  color: var(--latitude-white);
-  border-radius: 50%;
 }
-.social-link-icon:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(var(--latitude-orange-rgb), 0.4); }
-.social-link-icon svg { flex-shrink: 0; }
 
-@media (max-width: 768px) {
-  .hero-bg { background-attachment: scroll; }
-  .nav { flex-direction: column; gap: 1rem; }
-  .value-strip-inner { grid-template-columns: repeat(2, 1fr); }
-  .about-content { grid-template-columns: 1fr; }
-  .contact-grid { flex-direction: column; align-items: center; }
+.process-icon {
+  color: var(--lat-navy);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.process-step h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.process-step p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.coverage-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+}
+
+.testimonials {
+  background: var(--lat-navy);
+  color: #fff;
+  padding: 2.5rem;
+  border-radius: 1rem;
+}
+
+.testimonials h3 {
+  margin: 0 0 2.5rem;
+  font-size: 1.5rem;
+}
+
+.testimonial-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.testimonial-card {
+  margin: 0;
+  padding: 1.5rem;
+  background: rgba(30, 58, 138, 0.3);
+  border-left: 4px solid var(--lat-orange);
+  border-radius: 0.5rem;
+}
+
+.stars {
+  color: var(--lat-orange);
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.testimonial-card p {
+  margin: 0 0 1rem;
+  font-style: italic;
+  color: #d1d5db;
+  line-height: 1.55;
+}
+
+.testimonial-card cite {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.testimonial-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #6b7280;
+}
+
+.dot--active {
+  background: var(--lat-orange);
+}
+
+.coverage h3 {
+  margin: 0 0 1.5rem;
+  font-size: 1.5rem;
+  color: var(--lat-navy);
+}
+
+.map-wrap {
+  background: #eff6ff;
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-img {
+  max-width: 100%;
+  height: auto;
+  opacity: 0.72;
+  border-radius: 0.75rem;
+}
+
+.destinations {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.destinations ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.destinations li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.cta-band {
+  background: var(--lat-navy);
+  border-top: 4px solid var(--lat-orange);
+  padding: 3rem 1rem;
+}
+
+.cta-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.cta-text {
+  color: #fff;
+  text-align: center;
+}
+
+.cta-text h2 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+}
+
+.cta-text p {
+  margin: 0;
+  color: #d1d5db;
+}
+
+.cta-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Footer */
+.site-footer {
+  background: #fff;
+  border-top: 1px solid #f3f4f6;
+  padding: 4rem 1rem 2rem;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+}
+
+.footer-brand {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--lat-navy);
+}
+
+.footer-brand-sub {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: -0.02em;
+}
+
+.footer-tagline {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.site-footer h5 {
+  margin: 0 0 1.5rem;
+  color: var(--lat-navy);
+  font-size: 1rem;
+}
+
+.footer-links,
+.footer-contact {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+  color: #4b5563;
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover {
+  color: var(--lat-orange);
+}
+
+.footer-contact li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.footer-contact i {
+  margin-top: 0.15rem;
+}
+
+.footer-social {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.footer-social a {
+  color: var(--lat-navy);
+  font-size: 1.25rem;
+  transition: color 0.2s;
+}
+
+.footer-social a:hover {
+  color: var(--lat-orange);
+}
+
+.footer-bottom {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.footer-bottom p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.cert-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6b7280;
+  line-height: 1.2;
+}
+
+.cert-badge i {
+  font-size: 1.25rem;
+}
+
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+
+.animate-on-scroll.reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (min-width: 768px) {
+  .nav-toggle {
+    display: none;
+  }
+
+  .site-nav {
+    display: flex;
+    flex-direction: row;
+    width: auto;
+    order: 0;
+    padding: 0;
+  }
+
+  .site-nav--open {
+    flex-direction: row;
+    width: auto;
+    padding: 0;
+  }
+
+  .header-inner {
+    flex-wrap: nowrap;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .stat-item--wide {
+    grid-column: auto;
+  }
+
+  .services-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .why-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .why-list {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .process-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+  }
+
+  .coverage-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cta-inner {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .cta-text {
+    text-align: left;
+    max-width: 50%;
+  }
+
+  .cta-actions {
+    flex-direction: row;
+    width: auto;
+    max-width: none;
+  }
+
+  .footer-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .footer-bottom {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 767px) {
+  .nav-toggle {
+    display: block;
+  }
+
+  .header-actions .btn-sm span,
+  .header-actions .btn-sm i.fa-arrow-right {
+    display: none;
+  }
+
+  .header-actions .btn-sm::after {
+    content: 'Cotizar';
+  }
 }
 </style>
