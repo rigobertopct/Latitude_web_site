@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import Swal from 'sweetalert2'
 import heroImage from '../assets/images/hero-background.jpg'
@@ -8,6 +8,11 @@ import { useAuthStore } from '../stores/auth'
 const auth = useAuthStore()
 const authLoading = ref(false)
 const mobileNavOpen = ref(false)
+
+const userFirstName = computed(() => {
+  const raw = auth.displayName || auth.user?.email?.split('@')[0] || 'Usuario'
+  return raw.trim().split(/\s+/)[0] || 'Usuario'
+})
 
 const WHATSAPP_URL = 'https://wa.me/13057759737'
 
@@ -189,7 +194,7 @@ onMounted(() => {
 <template>
   <div class="landing">
     <header class="site-header">
-      <div class="container header-inner">
+      <div class="header-shell">
         <a href="#" class="brand" @click.prevent="scrollTo('inicio')">
           <span class="brand-main">LATITUDE</span>
           <span class="brand-sub">TRANSPORT SERVICES, INC.</span>
@@ -205,38 +210,37 @@ onMounted(() => {
           <i class="fas" :class="mobileNavOpen ? 'fa-times' : 'fa-bars'"></i>
         </button>
 
-        <nav class="site-nav" :class="{ 'site-nav--open': mobileNavOpen }">
-          <template v-for="link in navLinks" :key="link.label">
-            <RouterLink
-              v-if="link.route"
-              :to="link.route"
-              class="nav-link"
-              @click="mobileNavOpen = false"
-            >
-              {{ link.label }}
-            </RouterLink>
-            <a
-              v-else
-              href="#"
-              class="nav-link"
-              @click.prevent="onNavClick(link)"
-            >
-              {{ link.label }}
-            </a>
-          </template>
-        </nav>
+        <div class="header-center" :class="{ 'header-center--open': mobileNavOpen }">
+          <nav class="site-nav">
+            <template v-for="link in navLinks" :key="link.label">
+              <RouterLink
+                v-if="link.route"
+                :to="link.route"
+                class="nav-link"
+                @click="mobileNavOpen = false"
+              >
+                {{ link.label }}
+              </RouterLink>
+              <a
+                v-else
+                href="#"
+                class="nav-link"
+                @click.prevent="onNavClick(link)"
+              >
+                {{ link.label }}
+              </a>
+            </template>
+          </nav>
 
-        <div class="header-actions">
-          <RouterLink to="/cotizar" class="btn btn-orange btn-sm">
-            Solicitar cotización <i class="fas fa-arrow-right"></i>
-          </RouterLink>
-          <a :href="WHATSAPP_URL" target="_blank" rel="noopener noreferrer" class="whatsapp-icon" aria-label="WhatsApp">
-            <i class="fab fa-whatsapp"></i>
-          </a>
           <div class="header-auth">
             <template v-if="auth.isLoggedIn">
-              <span class="auth-user">Hola, {{ auth.displayName || 'Usuario' }}</span>
-              <button type="button" class="btn btn-ghost-sm" @click="handleSignOut">Salir</button>
+              <div class="user-pill" :title="auth.displayName || userFirstName">
+                <i class="fas fa-user-circle user-pill__icon" aria-hidden="true"></i>
+                <span class="user-pill__name">{{ userFirstName }}</span>
+                <button type="button" class="user-pill__logout" aria-label="Cerrar sesión" @click="handleSignOut">
+                  <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                </button>
+              </div>
             </template>
             <button
               v-else
@@ -245,6 +249,7 @@ onMounted(() => {
               :disabled="authLoading"
               @click="handleSignInGoogle"
             >
+              <i class="fab fa-google" aria-hidden="true"></i>
               {{ authLoading ? 'Conectando…' : 'Iniciar sesión' }}
             </button>
           </div>
@@ -484,13 +489,14 @@ onMounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.header-inner {
+.header-shell {
+  width: 100%;
+  max-width: 96rem;
+  margin: 0 auto;
+  padding: 0.65rem 1rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .brand {
@@ -498,11 +504,12 @@ onMounted(() => {
   color: inherit;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   min-width: 0;
 }
 
 .brand-main {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
   font-style: italic;
   letter-spacing: 0.02em;
@@ -510,14 +517,16 @@ onMounted(() => {
 }
 
 .brand-sub {
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   opacity: 0.95;
+  white-space: nowrap;
 }
 
 .nav-toggle {
   display: none;
+  margin-left: auto;
   background: transparent;
   border: none;
   color: #fff;
@@ -526,63 +535,107 @@ onMounted(() => {
   padding: 0.35rem;
 }
 
+.header-center {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
 .site-nav {
   display: none;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.65rem;
+  flex-wrap: nowrap;
 }
 
-.site-nav--open {
+.header-center--open {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   width: 100%;
   order: 4;
-  padding: 0.5rem 0 0.75rem;
+  padding-top: 0.5rem;
+  gap: 0.75rem;
+}
+
+.header-center--open .site-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.header-center--open .header-auth {
+  align-self: flex-start;
 }
 
 .nav-link {
   color: #fff;
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
+  white-space: nowrap;
   transition: color 0.2s;
+  line-height: 1.2;
 }
 
 .nav-link:hover {
   color: var(--lat-orange);
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-left: auto;
-}
-
 .header-auth {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
-.auth-user {
-  font-size: 0.8rem;
-  font-weight: 500;
-  max-width: 120px;
+.user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 11rem;
+  padding: 0.25rem 0.35rem 0.25rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.user-pill__icon {
+  font-size: 1.15rem;
+  color: var(--lat-orange);
+  flex-shrink: 0;
+}
+
+.user-pill__name {
+  font-size: 0.8125rem;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
-.whatsapp-icon {
+.user-pill__logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
+}
+
+.user-pill__logout:hover {
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
-  font-size: 1.35rem;
-  transition: color 0.2s;
-}
-
-.whatsapp-icon:hover {
-  color: #25d366;
 }
 
 /* Buttons */
@@ -639,22 +692,18 @@ onMounted(() => {
 }
 
 .btn-outline-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.65);
   color: #fff;
   padding: 0.4rem 0.75rem;
-  font-size: 0.8rem;
-  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 999px;
   cursor: pointer;
-}
-
-.btn-ghost-sm {
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 0.8rem;
-  cursor: pointer;
-  text-decoration: underline;
+  white-space: nowrap;
 }
 
 /* Hero */
@@ -1178,22 +1227,48 @@ onMounted(() => {
     display: none;
   }
 
-  .site-nav {
+  .header-shell {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 1rem;
+    padding: 0.6rem 1.25rem;
+  }
+
+  .header-center {
     display: flex;
     flex-direction: row;
-    width: auto;
-    order: 0;
-    padding: 0;
-  }
-
-  .site-nav--open {
-    flex-direction: row;
-    width: auto;
-    padding: 0;
-  }
-
-  .header-inner {
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
     flex-wrap: nowrap;
+    order: 0;
+    width: auto;
+    padding-top: 0;
+  }
+
+  .header-center--open {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    padding-top: 0;
+  }
+
+  .site-nav {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: clamp(0.45rem, 1.1vw, 0.85rem);
+  }
+
+  .header-center--open .site-nav {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .nav-link {
+    font-size: clamp(0.75rem, 0.95vw, 0.8125rem);
   }
 
   .stats-grid {
@@ -1251,18 +1326,35 @@ onMounted(() => {
   }
 }
 
+@media (min-width: 1100px) {
+  .brand-main {
+    font-size: 1.25rem;
+  }
+
+  .brand-sub {
+    font-size: 0.62rem;
+  }
+
+  .nav-link {
+    font-size: 0.875rem;
+  }
+
+  .site-nav {
+    gap: 1rem;
+  }
+}
+
 @media (max-width: 767px) {
+  .header-shell {
+    flex-wrap: wrap;
+  }
+
   .nav-toggle {
     display: block;
   }
 
-  .header-actions .btn-sm span,
-  .header-actions .btn-sm i.fa-arrow-right {
+  .header-center:not(.header-center--open) {
     display: none;
-  }
-
-  .header-actions .btn-sm::after {
-    content: 'Cotizar';
   }
 }
 </style>
